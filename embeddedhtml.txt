@@ -1,0 +1,3 @@
+write the steps to write the php code embedded with html, store the page and execute it without using any ide 
+
+Step1:- write a html code 
