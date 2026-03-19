@@ -134,6 +134,21 @@ create an html page as home page and display the product details using multi dim
                 echo "</tr>";
             }
         }
+        // average price of products in each category
+        echo "<tr><th colspan='4'>Average Price of Products in Each Category</th
+        </tr>";
+        foreach ($products as $category => $items) {
+            $totalPrice = 0;
+            $count = count($items);
+            foreach ($items as $item) {
+                $totalPrice += $item['price'];
+            }
+            $averagePrice = $count > 0 ? $totalPrice / $count : 0;
+            echo "<tr>";
+            echo "<td colspan='3'>" . $category . "</td>";
+            echo "<td>" . number_format($averagePrice, 2) . "</td>";
+            echo "</tr>";
+        }
         ?>
     </table>
 </body>
