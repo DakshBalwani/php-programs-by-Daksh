@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<!-- // write js code to set and access cookies
+// Set a cookie
+// add html also to properly chekck the code display cookie details also -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Example</title>
+</head>
+<body>
+    <h1>Cookie Example</h1>
+    <p>Check the browser's developer tools (Console) to see the cookie details.</p>
+
+    <script>
+    // accesscookie.js
+    // Set a cookie with a name, value, expiration date, and path
+    document.cookie = "username=Akshay Jain; expires=" + new Date(new Date().getTime() + 30*24*60*60*1000).toUTCString() + "; path=/";
+    
+    // Access the cookie
+    function getCookie(name) {
+        let cookieArr = document.cookie.split(";");
+        
+        for(let i = 0; i < cookieArr.length; i++) {
+            let cookiePair = cookieArr[i].split("=");
+            if(name == cookiePair[0].trim()) {
+                return decodeURIComponent(cookiePair[1]);
+            }
+        }
+        return null;
+    }
+    
+    let username = getCookie("username");
+    if(username) {
+        console.log("Welcome back, " + username + "!");
+    } else {
+        console.log("Welcome, new user!");
+    } 
+    </script>
+</body>
+
+</html>
