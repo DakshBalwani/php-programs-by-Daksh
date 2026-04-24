@@ -1,228 +1,153 @@
-<!-- V.Student Record Management System:  
-  Design database and student table. 
-  Implement add, view, edit, delete functionality. 
-  Create dynamic interface using PHP loops. 
-Validate user input. 
-Test system for multiple entries.  -->
 <?php
-$file = "students.json";
+// ================= DEBUG MODE =================
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Create file if not exists
-if (!file_exists($file)) {
-    file_put_contents($file, "[]");
+// Show current file path (helps debug URL issues)
+echo "<small>Running file: " . __FILE__ . "</small><br><br>";
+
+// ================= DATABASE CONNECTION =================
+$conn = new mysqli("localhost", "root", "", "student_db");
+
+if ($conn->connect_error) {
+    die("❌ DB Connection Failed: " . $conn->connect_error);
+} else {
+    echo "<small style='color:green'>✅ Database Connected</small><br><br>";
 }
 
-// Read data
-$data = json_decode(file_get_contents($file), true);
-if (!is_array($data)) {
-    $data = [];
-}
+// ================= CREATE TABLE IF NOT EXISTS =================
+$conn->query("
+CREATE TABLE IF NOT EXISTS students (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(15),
+    course VARCHAR(50)
+)
+");
 
-// Initialize edit
-$editData = null;
+// ================= ADD / UPDATE =================
+if (isset($_POST['save'])) {
 
-// ADD
-if (isset($_POST['add'])) {
+    $id = $_POST['id'];
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
+    $phone = trim($_POST['phone']);
     $course = trim($_POST['course']);
 
-    if ($name && $email && $course) {
-        $data[] = [
-            "name" => $name,
-            "email" => $email,
-            "course" => $course
-        ];
-
-        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
-        header("Location: ".$_SERVER['PHP_SELF']);
-        exit();
+    if (empty($name) || empty($email)) {
+        $error = "❌ Name & Email required!";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "❌ Invalid Email!";
     } else {
-        echo "<p style='color:red;text-align:center;'>All fields required!</p>";
+
+        if ($id == "") {
+            $stmt = $conn->prepare("INSERT INTO students(name,email,phone,course) VALUES(?,?,?,?)");
+            $stmt->bind_param("ssss", $name, $email, $phone, $course);
+        } else {
+            $stmt = $conn->prepare("UPDATE students SET name=?, email=?, phone=?, course=? WHERE id=?");
+            $stmt->bind_param("ssssi", $name, $email, $phone, $course, $id);
+        }
+
+        if ($stmt->execute()) {
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit();
+        } else {
+            $error = "❌ DB Error: " . $conn->error;
+        }
     }
 }
 
-// DELETE
+// ================= DELETE =================
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
-    unset($data[$id]);
-    $data = array_values($data);
 
-    file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
-    header("Location: ".$_SERVER['PHP_SELF']);
+    $stmt = $conn->prepare("DELETE FROM students WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
 
-// EDIT LOAD
+// ================= EDIT FETCH =================
+$editData = ["id"=>"","name"=>"","email"=>"","phone"=>"","course"=>""];
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
-    $editData = $data[$id];
-}
-
-// UPDATE
-if (isset($_POST['update'])) {
-    $id = $_POST['id'];
-
-    $data[$id] = [
-        "name" => $_POST['name'],
-        "email" => $_POST['email'],
-        "course" => $_POST['course']
-    ];
-
-    file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
-    header("Location: ".$_SERVER['PHP_SELF']);
-    exit();
+    $res = $conn->query("SELECT * FROM students WHERE id=$id");
+    if ($res && $res->num_rows > 0) {
+        $editData = $res->fetch_assoc();
+    }
 }
 ?>
 
+<!DOCTYPE html>
 <html>
 <head>
-<title>Student Record System</title>
-
-<style>
-body {
-    font-family: Arial;
-    background: #f4f6f8;
-    margin: 0;
-}
-
-/* CENTER */
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 40px;
-}
-
-/* FORM */
-.form-box {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 300px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-h2 {
-    text-align: center;
-}
-
-/* INPUT */
-input {
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-}
-
-/* BUTTON */
-button {
-    width: 100%;
-    padding: 10px;
-    background: #007bff;
-    color: white;
-    border: none;
-    margin-top: 10px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #0056b3;
-}
-
-/* TABLE */
-.table-box {
-    width: 90%;
-    margin: 40px auto;
-}
-
-table {
-    border-collapse: collapse;
-    width: 100%;
-    background: white;
-}
-
-th {
-    background: #007bff;
-    color: white;
-}
-
-th, td {
-    padding: 10px;
-    text-align: center;
-}
-
-a {
-    text-decoration: none;
-    color: blue;
-}
-</style>
-
+    <title>Case 5 - Student System</title>
+    <style>
+        body { font-family: Arial; margin: 30px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { padding: 10px; border: 1px solid #ccc; }
+        input { padding: 6px; margin: 5px; }
+        button { padding: 8px 15px; background: purple; color: white; border: none; }
+        .error { color: red; }
+    </style>
 </head>
 <body>
 
-<div class="container">
+<h2>🎓 Student Record Management (case5.php)</h2>
 
-    <div class="form-box">
-        <h2>Student Form</h2>
+<?php if(isset($error)) echo "<p class='error'>$error</p>"; ?>
 
-        <form method="post">
-            <input type="hidden" name="id" value="<?php echo $_GET['edit'] ?? ''; ?>">
+<!-- FORM -->
+<form method="POST">
+    <input type="hidden" name="id" value="<?= $editData['id'] ?>">
 
-            Name:
-            <input type="text" name="name" value="<?php echo $editData['name'] ?? ''; ?>">
+    Name: <input type="text" name="name" value="<?= $editData['name'] ?>" required>
+    Email: <input type="email" name="email" value="<?= $editData['email'] ?>" required>
+    Phone: <input type="text" name="phone" value="<?= $editData['phone'] ?>">
+    Course: <input type="text" name="course" value="<?= $editData['course'] ?>">
 
-            Email:
-            <input type="email" name="email" value="<?php echo $editData['email'] ?? ''; ?>">
+    <button name="save"><?= $editData['id'] ? 'Update' : 'Add' ?></button>
+</form>
 
-            Course:
-            <input type="text" name="course" value="<?php echo $editData['course'] ?? ''; ?>">
+<br>
 
-            <?php if ($editData) { ?>
-                <button name="update">Update</button>
-            <?php } else { ?>
-                <button name="add">Add</button>
-            <?php } ?>
-        </form>
-    </div>
-
-</div>
-
-<div class="table-box">
-
-<h2>Student Records</h2>
-
-<!-- BONUS -->
-<h3>Total Students: <?php echo count($data); ?></h3>
-
-<table border="1">
+<!-- TABLE -->
+<table>
 <tr>
-    <th>No</th>
+    <th>ID</th>
     <th>Name</th>
     <th>Email</th>
+    <th>Phone</th>
     <th>Course</th>
     <th>Action</th>
 </tr>
 
 <?php
-foreach ($data as $index => $student) {
+$result = $conn->query("SELECT * FROM students ORDER BY id DESC");
+
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        echo "<tr>
+            <td>{$row['id']}</td>
+            <td>{$row['name']}</td>
+            <td>{$row['email']}</td>
+            <td>{$row['phone']}</td>
+            <td>{$row['course']}</td>
+            <td>
+                <a href='?edit={$row['id']}'>Edit</a> |
+                <a href='?delete={$row['id']}' onclick='return confirm(\"Delete?\")'>Delete</a>
+            </td>
+        </tr>";
+    }
+} else {
+    echo "<tr><td colspan='6'>No Records Found</td></tr>";
+}
 ?>
-<tr>
-    <td><?php echo $index + 1; ?></td>
-    <td><?php echo $student['name']; ?></td>
-    <td><?php echo $student['email']; ?></td>
-    <td><?php echo $student['course']; ?></td>
-    <td>
-        <a href="?edit=<?php echo $index; ?>">Edit</a> |
-        <a href="?delete=<?php echo $index; ?>" 
-           onclick="return confirm('Are you sure?')">Delete</a>
-    </td>
-</tr>
-<?php } ?>
 
 </table>
-
-</div>
 
 </body>
 </html>

@@ -27,5 +27,5 @@ function calculateAge($birthdate) {
     ];
 }
 // Example usage
-$age = calculateAge("2005-07-06 00:30:10");
-echo "Hey <<<AKSHAY>AKSHAY>> YOU ARE " . $age['years'] . " YEARS, " . $age['months'] . " MONTHS AND " . $age['days'] . " DAYS OLD.. YOU HAVE SPENT " . $age['hours'] . " HOURS, " . $age['minutes'] . " MINUTES, AND " . $age['seconds'] . " SECONDS ON THIS BEAUTIFUL EARTH. HAPPY BIRTHDAY";
+$age = calculateAge("2005-02-23 12:30:10");
+echo "Hey <<<Yuvraj>Yuvraj>> YOU ARE " . $age['years'] . " YEARS, " . $age['months'] . " MONTHS AND " . $age['days'] . " DAYS OLD.. YOU HAVE SPENT " . $age['hours'] . " HOURS, " . $age['minutes'] . " MINUTES, AND " . $age['seconds'] . " SECONDS ON THIS BEAUTIFUL EARTH. HAPPY BIRTHDAY";
